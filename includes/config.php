@@ -1,28 +1,38 @@
 <?php
-// Database Configuration
-define('DB_HOST', 'localhost');
-define('DB_USER', 'root');
-define('DB_PASS', '');
-define('DB_NAME', 'stockholder_db');
+// 1. Database Configuration
+// Using getenv() allows the code to work on both local and live servers (Railway/Render)
+define('DB_HOST', getenv('DB_HOST') ?: 'gateway01.ap-southeast-1.prod.alicloud.tidbcloud.com');
+define('DB_PORT', getenv('DB_PORT') ?: 4000);
+define('DB_USER', getenv('DB_USER') ?: '2B6tDnXn3qLev5o.root');
+define('DB_PASS', getenv('DB_PASS') ?: 'YOUR_ACTUAL_PASSWORD'); // <--- REPLACE THIS WITH YOUR PASSWORD
+define('DB_NAME', getenv('DB_NAME') ?: 'stockholder_db');
 
-// Create connection
-$conn = new mysqli(DB_HOST, DB_USER, DB_PASS);
+// 2. Initialize connection with SSL (Required for TiDB Serverless)
+$conn = mysqli_init();
 
-// Check connection
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
+// Path to CA Cert (Standard for Linux-based hosting like Railway/Render)
+$ssl_ca = '/etc/ssl/certs/ca-certificates.crt';
+
+// Apply SSL settings before connecting
+mysqli_ssl_set($conn, NULL, NULL, $ssl_ca, NULL, NULL);
+
+// 3. Establish Connection
+$success = mysqli_real_connect(
+    $conn, 
+    DB_HOST, 
+    DB_USER, 
+    DB_PASS, 
+    DB_NAME, 
+    DB_PORT, 
+    NULL, 
+    MYSQLI_CLIENT_SSL
+);
+
+if (!$success) {
+    die("Connection failed: " . mysqli_connect_error());
 }
 
-// Create database if not exists
-$sql = "CREATE DATABASE IF NOT EXISTS " . DB_NAME;
-if ($conn->query($sql) === TRUE) {
-    // Database created successfully
-}
-
-// Select database
-$conn->select_db(DB_NAME);
-
-// Create tables if not exists
+// 4. Create tables if they do not exist
 $tables_sql = "
 CREATE TABLE IF NOT EXISTS stockholders (
     id INT PRIMARY KEY AUTO_INCREMENT,
@@ -70,24 +80,31 @@ CREATE TABLE IF NOT EXISTS proxies (
     created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (stockholder_id) REFERENCES stockholders(id) ON DELETE CASCADE
 );
+
+CREATE TABLE IF NOT EXISTS activity_logs (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    admin_id INT,
+    admin_name VARCHAR(100),
+    action_type VARCHAR(50),
+    description TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
 ";
 
 // Execute table creation
-if ($conn->multi_query($tables_sql) === FALSE) {
+if ($conn->multi_query($tables_sql)) {
+    // Clear results from multi_query
+    while ($conn->next_result()) {;}
+} else {
     error_log("Error creating tables: " . $conn->error);
 }
 
-// Clear results from multi_query
-while ($conn->next_result()) {
-    ;
-}
-
-// Utility Functions
+// 5. Utility Functions
 function getAllStockholders($conn) {
     $sql = "SELECT * FROM stockholders ORDER BY created_date DESC";
     $result = $conn->query($sql);
     $stockholders = [];
-    if ($result->num_rows > 0) {
+    if ($result && $result->num_rows > 0) {
         while ($row = $result->fetch_assoc()) {
             $stockholders[] = $row;
         }
@@ -142,7 +159,7 @@ function getDividendsByStockholder($conn, $stockholder_id) {
 function getAllDividends($conn) {
     $sql = "SELECT d.*, s.name FROM dividends d JOIN stockholders s ON d.stockholder_id = s.id ORDER BY d.distribution_date DESC";
     $result = $conn->query($sql);
-    return $result->fetch_all(MYSQLI_ASSOC);
+    return $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
 }
 
 function addAttendance($conn, $stockholder_id, $attendance_date, $status) {
@@ -186,7 +203,7 @@ function getProxiesByStockholder($conn, $stockholder_id) {
 function getAllProxies($conn) {
     $sql = "SELECT p.*, s.name FROM proxies p JOIN stockholders s ON p.stockholder_id = s.id ORDER BY p.created_date DESC";
     $result = $conn->query($sql);
-    return $result->fetch_all(MYSQLI_ASSOC);
+    return $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
 }
 
 function updateProxy($conn, $id, $proxy_name, $proxy_email, $proxy_phone, $authorization_date, $expiry_date, $status) {
@@ -206,23 +223,25 @@ function deleteProxy($conn, $id) {
 function getTotalShares($conn) {
     $sql = "SELECT SUM(shares) as total FROM stockholders WHERE status = 'Active'";
     $result = $conn->query($sql);
-    return $result->fetch_assoc()['total'] ?? 0;
+    $row = $result->fetch_assoc();
+    return $row['total'] ?? 0;
 }
 
 function getTotalDividends($conn) {
     $sql = "SELECT SUM(amount) as total FROM dividends WHERE status = 'Paid'";
     $result = $conn->query($sql);
-    return $result->fetch_assoc()['total'] ?? 0;
+    $row = $result->fetch_assoc();
+    return $row['total'] ?? 0;
 }
 
 function getActiveStockholders($conn) {
     $sql = "SELECT COUNT(*) as count FROM stockholders WHERE status = 'Active'";
     $result = $conn->query($sql);
-    return $result->fetch_assoc()['count'] ?? 0;
+    $row = $result->fetch_assoc();
+    return $row['count'] ?? 0;
 }
 
 function logActivity($conn, $action_type, $description) {
-    // Ensure session variables exist to avoid notices
     $admin_id = $_SESSION['admin_id'] ?? 0; 
     $admin_name = $_SESSION['admin_name'] ?? 'System';
 
