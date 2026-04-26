@@ -5,7 +5,7 @@ define('DB_HOST', getenv('DB_HOST') ?: 'gateway01.ap-southeast-1.prod.alicloud.t
 define('DB_PORT', getenv('DB_PORT') ?: 4000);
 define('DB_USER', getenv('DB_USER') ?: '2B6tDnXn3qLev5o.root');
 define('DB_PASS', getenv('DB_PASS') ?: 'vDPhV7S3MvCQ36Pf'); // <--- REPLACE THIS WITH YOUR PASSWORD
-define('DB_NAME', getenv('DB_NAME') ?: 'stockholder_db');
+define('DB_NAME', getenv('DB_NAME') ?: 'sys');
 
 // 2. Initialize connection with SSL (Required for TiDB Serverless)
 $conn = mysqli_init();
