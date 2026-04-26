@@ -1,6 +1,14 @@
 <?php
+// 1. Enable Error Reporting (To see why the "Application failed to respond")
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
+// 2. Include Configuration and Authentication
 include 'includes/config.php'; 
 include 'includes/auth.php';
+
+// 3. Ensure User is Logged In
 requireLogin();
 ?>
 
@@ -15,7 +23,6 @@ requireLogin();
 </head>
 
 <body>
-    <!-- Navigation -->
     <nav>
         <div class="navbar-container">
             <div class="navbar-brand">
@@ -41,7 +48,6 @@ requireLogin();
         </div>
     </nav>
 
-    <!-- Main Content -->
     <div class="container">
         <div class="card">
             <div class="card-header">University of Bohol | Annual Stockholders Attendance System</div>
@@ -54,80 +60,81 @@ requireLogin();
             <p style="margin-top: 20px;">Select an option from the menu to get started.</p>
 
             <div style="text-align: center; margin-top: 20px; margin-left: -25px; margin-right: -25px;">
-                <img src="images/UB.jpg" alt="University of Bohol" style="width: 100%; height: 600px; object-fit: cover; border-radius: 0 0 0 0;">
+                <img src="images/UB.jpg" alt="University of Bohol" style="width: 100%; height: 600px; object-fit: cover;">
             </div>
         </div>
 
-        <!-- Statistics -->
         <div class="stats-container">
             <div class="stat-card">
                 <div class="stat-label">Total Stockholders</div>
                 <div class="stat-number">
-                    <?php echo getActiveStockholders($conn); ?>
+                    <?php echo isset($conn) ? getActiveStockholders($conn) : '0'; ?>
                 </div>
             </div>
             <div class="stat-card">
                 <div class="stat-label">Total Shares</div>
                 <div class="stat-number">
-                    <?php echo number_format(getTotalShares($conn), 2); ?>
+                    <?php echo isset($conn) ? number_format(getTotalShares($conn), 2) : '0.00'; ?>
                 </div>
             </div>
             <div class="stat-card">
                 <div class="stat-label">Total Dividends Paid</div>
                 <div class="stat-number">
-                    $<?php echo number_format(getTotalDividends($conn), 2); ?>
+                    $<?php echo isset($conn) ? number_format(getTotalDividends($conn), 2) : '0.00'; ?>
                 </div>
             </div>
         </div>
 
-        <!-- Recent Stockholders -->
         <div class="card">
             <div class="card-header">Recent Stockholders</div>
             <?php
-            $stockholders = getAllStockholders($conn);
-            if (count($stockholders) > 0) {
-                echo '<table>
-                    <thead>
-                        <tr>
-                            <th>Name</th>
-                            <th>Email</th>
-                            <th>Phone</th>
-                            <th>Type</th>
-                            <th>Shares</th>
-                            <th>Status</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>';
-                $count = 0;
-                foreach ($stockholders as $sh) {
-                    if ($count >= 5) break;
-                    $badge_class = $sh['status'] == 'Active' ? 'badge-success' : 'badge-danger';
-                    echo '<tr>
-                        <td>' . htmlspecialchars($sh['name']) . '</td>
-                        <td>' . htmlspecialchars($sh['email']) . '</td>
-                        <td>' . htmlspecialchars($sh['phone']) . '</td>
-                        <td>' . htmlspecialchars($sh['type']) . '</td>
-                        <td>' . number_format($sh['shares'], 2) . '</td>
-                        <td><span class="badge ' . $badge_class . '">' . $sh['status'] . '</span></td>
-                        <td class="action-links">
-                            <a href="edit-stockholder.php?edit=' . $sh['id'] . '">Edit</a>
-                        </td>
-                    </tr>';
-                    $count++;
+            if (isset($conn)) {
+                $stockholders = getAllStockholders($conn);
+                if (count($stockholders) > 0) {
+                    echo '<table>
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Phone</th>
+                                <th>Type</th>
+                                <th>Shares</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>';
+                    $count = 0;
+                    foreach ($stockholders as $sh) {
+                        if ($count >= 5) break;
+                        $badge_class = ($sh['status'] == 'Active') ? 'badge-success' : 'badge-danger';
+                        echo '<tr>
+                            <td>' . htmlspecialchars($sh['name']) . '</td>
+                            <td>' . htmlspecialchars($sh['email']) . '</td>
+                            <td>' . htmlspecialchars($sh['phone']) . '</td>
+                            <td>' . htmlspecialchars($sh['type']) . '</td>
+                            <td>' . number_format($sh['shares'], 2) . '</td>
+                            <td><span class="badge ' . $badge_class . '">' . htmlspecialchars($sh['status']) . '</span></td>
+                            <td class="action-links">
+                                <a href="edit-stockholder.php?edit=' . $sh['id'] . '">Edit</a>
+                            </td>
+                        </tr>';
+                        $count++;
+                    }
+                    echo '</tbody></table>';
+                } else {
+                    echo '<div class="empty-state">
+                        <div class="empty-state-icon">📭</div>
+                        <div class="empty-state-text">No stockholders found</div>
+                        <a href="add-stockholder.php" class="btn btn-primary">Add First Stockholder</a>
+                    </div>';
                 }
-                echo '</tbody></table>';
             } else {
-                echo '<div class="empty-state">
-                    <div class="empty-state-icon">📭</div>
-                    <div class="empty-state-text">No stockholders found</div>
-                    <a href="add-stockholder.php" class="btn btn-primary">Add First Stockholder</a>
-                </div>';
+                echo '<p style="color:red;">Database connection error. Please check your credentials.</p>';
             }
             ?>
         </div>
 
-        <!-- Quick Actions -->
         <div class="card">
             <div class="card-header">Quick Actions</div>
             <div class="btn-group">
@@ -139,11 +146,5 @@ requireLogin();
             </div>
         </div>
     </div>
-
-    <!-- Footer -->
-    <!-- <footer>
-        <p>&copy; 2026 University of Bohol Stockholders' System. All rights reserved.</p>
-    </footer> -->
 </body>
-
 </html>
