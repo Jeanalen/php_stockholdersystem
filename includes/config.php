@@ -15,9 +15,6 @@ $conn = mysqli_init();
 $ssl_ca = is_file('/etc/ssl/certs/ca-certificates.crt') ? '/etc/ssl/certs/ca-certificates.crt' : NULL;
 mysqli_ssl_set($conn, NULL, NULL, $ssl_ca, NULL, NULL);
 
-// Apply SSL settings before connecting
-mysqli_ssl_set($conn, NULL, NULL, $ssl_ca, NULL, NULL);
-
 // 3. Establish Connection
 $success = mysqli_real_connect(
     $conn, 
