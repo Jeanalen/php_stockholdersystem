@@ -11,7 +11,9 @@ define('DB_NAME', getenv('DB_NAME') ?: 'sys');
 $conn = mysqli_init();
 
 // Path to CA Cert (Standard for Linux-based hosting like Railway/Render)
-$ssl_ca = '/etc/ssl/certs/ca-certificates.crt';
+// Try the standard path, but if it's missing, use NULL to let PHP find it automatically
+$ssl_ca = is_file('/etc/ssl/certs/ca-certificates.crt') ? '/etc/ssl/certs/ca-certificates.crt' : NULL;
+mysqli_ssl_set($conn, NULL, NULL, $ssl_ca, NULL, NULL);
 
 // Apply SSL settings before connecting
 mysqli_ssl_set($conn, NULL, NULL, $ssl_ca, NULL, NULL);
