@@ -1,21 +1,27 @@
 <?php
-// 1. Database Configuration
-// Using getenv() allows the code to work on both local and live servers (Railway/Render)
+// 1. Enable Error Reporting (Crucial for debugging Railway errors)
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
+// 2. Database Configuration
+// Railway Variables will override these defaults automatically
 define('DB_HOST', getenv('DB_HOST') ?: 'gateway01.ap-southeast-1.prod.alicloud.tidbcloud.com');
 define('DB_PORT', getenv('DB_PORT') ?: 4000);
 define('DB_USER', getenv('DB_USER') ?: '2B6tDnXn3qLev5o.root');
-define('DB_PASS', getenv('DB_PASS') ?: 'vDPhV7S3MvCQ36Pf'); // <--- REPLACE THIS WITH YOUR PASSWORD
+define('DB_PASS', getenv('DB_PASS') ?: 'vDPhV7S3MvCQ36Pf'); 
 define('DB_NAME', getenv('DB_NAME') ?: 'stockholder_db');
 
-// 2. Initialize connection with SSL (Required for TiDB Serverless)
+// 3. Establish Connection with SSL
 $conn = mysqli_init();
 
-// Path to CA Cert (Standard for Linux-based hosting like Railway/Render)
-// Try the standard path, but if it's missing, use NULL to let PHP find it automatically
+// Path for Railway/Linux environments
 $ssl_ca = is_file('/etc/ssl/certs/ca-certificates.crt') ? '/etc/ssl/certs/ca-certificates.crt' : NULL;
 mysqli_ssl_set($conn, NULL, NULL, $ssl_ca, NULL, NULL);
 
-// 3. Establish Connection
+// Connection with a 5-second timeout to prevent "Application failed to respond"
+mysqli_options($conn, MYSQLI_OPT_CONNECT_TIMEOUT, 5);
+
 $success = mysqli_real_connect(
     $conn, 
     DB_HOST, 
@@ -28,7 +34,7 @@ $success = mysqli_real_connect(
 );
 
 if (!$success) {
-    die("Connection failed: " . mysqli_connect_error());
+    die("❌ Database Connection Failed: " . mysqli_connect_error());
 }
 
 // 4. Create tables if they do not exist
