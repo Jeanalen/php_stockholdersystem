@@ -7,11 +7,11 @@ error_reporting(E_ALL);
 // 2. Include Configuration and Authentication
 // Ensure these paths are correct relative to your root folder
 require_once 'includes/config.php'; 
-require_once 'includes/auth.php';
+//require_once 'includes/auth.php';
 
 // 3. Secure the Page
 // Note: If you haven't finished auth.php yet, comment out requireLogin() to test the UI
-requireLogin(); 
+//requireLogin(); 
 ?>
 
 <!DOCTYPE html>
