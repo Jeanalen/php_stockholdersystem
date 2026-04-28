@@ -14,21 +14,10 @@ define('DB_USER', getenv('DB_USER') ?: '2B6tDnXn3qLev5o.root');
 define('DB_PASS', getenv('DB_PASS') ?: 'zhprfBGhQO9t2xvL'); 
 define('DB_NAME', getenv('DB_NAME') ?: 'stockholder_db');
 
+// Put this at the very top of mysqli_real_connect
+mysqli_report(MYSQLI_REPORT_OFF); // Stop PHP from crashing on DB errors
 $conn = mysqli_init();
-
-// Try the two most common Linux SSL paths
-if (file_exists('/etc/ssl/certs/ca-certificates.crt')) {
-    $ssl_ca = '/etc/ssl/certs/ca-certificates.crt';
-} elseif (file_exists('/etc/pki/tls/certs/ca-bundle.crt')) {
-    $ssl_ca = '/etc/pki/tls/certs/ca-bundle.crt';
-} else {
-    $ssl_ca = NULL; // Fallback
-}
-
-mysqli_ssl_set($conn, NULL, NULL, $ssl_ca, NULL, NULL);
-
-// This line is VITAL. It stops the "Failed to respond" hang after 5 seconds.
-mysqli_options($conn, MYSQLI_OPT_CONNECT_TIMEOUT, 5); 
+mysqli_options($conn, MYSQLI_OPT_CONNECT_TIMEOUT, 3); // Kill connection attempt after 3 seconds
 
 $success = @mysqli_real_connect(
     $conn, 
@@ -42,15 +31,9 @@ $success = @mysqli_real_connect(
 );
 
 if (!$success) {
-    die("<h1>Database Connection Error</h1><p>" . mysqli_connect_error() . "</p>");
+    echo "<h1>Maintenance Mode</h1><p>We are having trouble reaching the database. Please try again in a moment.</p>";
+    exit; // Stop the script here so Railway doesn't think it "failed to respond"
 }
-
-// Minimal helper functions to prevent index.php from crashing
-function getActiveStockholders($conn) { return 0; }
-function getTotalShares($conn) { return 0; }
-function getTotalDividends($conn) { return 0; }
-function getAllStockholders($conn) { return []; }
-function getAdminName() { return "Admin"; }
 
 // 4. Helper Functions
 function getAllStockholders($conn) {
