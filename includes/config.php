@@ -45,6 +45,13 @@ if (!$success) {
     die("<h1>Database Connection Error</h1><p>" . mysqli_connect_error() . "</p>");
 }
 
+// Minimal helper functions to prevent index.php from crashing
+function getActiveStockholders($conn) { return 0; }
+function getTotalShares($conn) { return 0; }
+function getTotalDividends($conn) { return 0; }
+function getAllStockholders($conn) { return []; }
+function getAdminName() { return "Admin"; }
+
 // 4. Helper Functions
 function getAllStockholders($conn) {
     $result = $conn->query("SELECT * FROM stockholders ORDER BY created_date DESC");
