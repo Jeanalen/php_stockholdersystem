@@ -14,18 +14,35 @@ define('DB_USER', getenv('DB_USER') ?: '2B6tDnXn3qLev5o.root');
 define('DB_PASS', getenv('DB_PASS') ?: 'zhprfBGhQO9t2xvL'); 
 define('DB_NAME', getenv('DB_NAME') ?: 'stockholder_db');
 
-// 3. Establish Connection
 $conn = mysqli_init();
-$ssl_ca = '/etc/ssl/certs/ca-certificates.crt';
-if (!file_exists($ssl_ca)) { $ssl_ca = NULL; }
+
+// Try the two most common Linux SSL paths
+if (file_exists('/etc/ssl/certs/ca-certificates.crt')) {
+    $ssl_ca = '/etc/ssl/certs/ca-certificates.crt';
+} elseif (file_exists('/etc/pki/tls/certs/ca-bundle.crt')) {
+    $ssl_ca = '/etc/pki/tls/certs/ca-bundle.crt';
+} else {
+    $ssl_ca = NULL; // Fallback
+}
 
 mysqli_ssl_set($conn, NULL, NULL, $ssl_ca, NULL, NULL);
-mysqli_options($conn, MYSQLI_OPT_CONNECT_TIMEOUT, 10);
 
-$success = mysqli_real_connect($conn, DB_HOST, DB_USER, DB_PASS, DB_NAME, DB_PORT, NULL, MYSQLI_CLIENT_SSL);
+// This line is VITAL. It stops the "Failed to respond" hang after 5 seconds.
+mysqli_options($conn, MYSQLI_OPT_CONNECT_TIMEOUT, 5); 
+
+$success = @mysqli_real_connect(
+    $conn, 
+    DB_HOST, 
+    DB_USER, 
+    DB_PASS, 
+    DB_NAME, 
+    DB_PORT, 
+    NULL, 
+    MYSQLI_CLIENT_SSL
+);
 
 if (!$success) {
-    die("❌ Connection failed: " . mysqli_connect_error());
+    die("<h1>Database Connection Error</h1><p>" . mysqli_connect_error() . "</p>");
 }
 
 // 4. Helper Functions
