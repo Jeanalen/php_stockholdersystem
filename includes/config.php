@@ -14,10 +14,23 @@ define('DB_USER', getenv('DB_USER') ?: '2B6tDnXn3qLev5o.root');
 define('DB_PASS', getenv('DB_PASS') ?: '3kmIPXAUQc93g8ek'); 
 define('DB_NAME', getenv('DB_NAME') ?: 'stockholder_db');
 
-// Put this at the very top of mysqli_real_connect
-mysqli_report(MYSQLI_REPORT_OFF); // Stop PHP from crashing on DB errors
 $conn = mysqli_init();
-mysqli_options($conn, MYSQLI_OPT_CONNECT_TIMEOUT, 3); // Kill connection attempt after 3 seconds
+
+// Railway usually uses this specific path for SSL certificates
+$ssl_ca = '/etc/ssl/certs/ca-certificates.crt';
+
+// If that file doesn't exist, we try the other common Linux path
+if (!file_exists($ssl_ca)) {
+    $ssl_ca = '/etc/pki/tls/certs/ca-bundle.crt';
+}
+
+// If STILL not found, we let mysqli try to find it automatically
+if (file_exists($ssl_ca)) {
+    mysqli_ssl_set($conn, NULL, NULL, $ssl_ca, NULL, NULL);
+}
+
+// This is the most important line to stop the "Failed to Respond" error
+mysqli_options($conn, MYSQLI_OPT_CONNECT_TIMEOUT, 5); 
 
 $success = @mysqli_real_connect(
     $conn, 
