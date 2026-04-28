@@ -11,7 +11,7 @@ if (session_status() === PHP_SESSION_NONE) {
 define('DB_HOST', getenv('DB_HOST') ?: 'gateway01.ap-southeast-1.prod.alicloud.tidbcloud.com');
 define('DB_PORT', getenv('DB_PORT') ?: 4000);
 define('DB_USER', getenv('DB_USER') ?: '2B6tDnXn3qLev5o.root');
-define('DB_PASS', getenv('DB_PASS') ?: 'vDPhV7S3MvCQ36Pf'); 
+define('DB_PASS', getenv('DB_PASS') ?: 'zhprfBGhQO9t2xvL'); 
 define('DB_NAME', getenv('DB_NAME') ?: 'stockholder_db');
 
 // 3. Establish Connection
