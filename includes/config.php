@@ -11,7 +11,7 @@ if (session_status() === PHP_SESSION_NONE) {
 define('DB_HOST', getenv('DB_HOST') ?: 'gateway01.ap-southeast-1.prod.alicloud.tidbcloud.com');
 define('DB_PORT', getenv('DB_PORT') ?: 4000);
 define('DB_USER', getenv('DB_USER') ?: '2B6tDnXn3qLev5o.root');
-define('DB_PASS', getenv('DB_PASS') ?: 'IuMMZ8FAHpV9L4bn'); 
+define('DB_PASS', getenv('DB_PASS') ?: '3kmIPXAUQc93g8ek'); 
 define('DB_NAME', getenv('DB_NAME') ?: 'stockholder_db');
 
 // Put this at the very top of mysqli_real_connect
